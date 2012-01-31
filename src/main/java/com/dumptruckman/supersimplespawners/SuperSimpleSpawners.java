@@ -131,8 +131,8 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         CreatureSpawner spawner = (CreatureSpawner) block.getState();
         Short entityId = EntityType.valueOf(spawner.getCreatureType()).getId();
         if (entityId == null) {
-            this.getLogger().warning("Unsupported spawner type, " +
-                    "nag dumptruckman to update this!");
+            this.getLogger().warning("Unsupported spawner type, "
+                    + "nag dumptruckman to update this!");
             return;
         }
         ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityId);

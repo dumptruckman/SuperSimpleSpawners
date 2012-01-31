@@ -10,6 +10,7 @@ import java.util.Map;
  * THIS SHOULD NOT BE NECESSARY. :(
  */
 public enum EntityType {
+    // BEGIN CHECKSTYLE-SUPPRESSION: Javadoc
     CREEPER((short) 50, CreatureType.CREEPER),
     SKELETON((short) 51, CreatureType.SKELETON),
     SPIDER((short) 52, CreatureType.SPIDER),
@@ -35,6 +36,7 @@ public enum EntityType {
     SNOWMAN((short) 97, CreatureType.SNOWMAN),
     //OCELOT(98, CreatureType.OCELOT),
     VILLAGER((short) 120, CreatureType.VILLAGER);
+    // END CHECKSTYLE-SUPPRESSION: Javadoc
 
     private final short id;
     private final CreatureType type;
@@ -56,18 +58,32 @@ public enum EntityType {
         }
     }
 
+    /**
+     * @return The entity ID of this EntityType.
+     */
     public final short getId() {
         return id;
     }
 
+    /**
+     * @return The bukkit CreatureType for this EntityType.
+     */
     public final CreatureType getType() {
         return type;
     }
 
+    /**
+     * @param id Entity id to lookup.
+     * @return EntityType matching id given.
+     */
     public static EntityType valueOf(final short id) {
         return ID_MAP.get(id);
     }
 
+    /**
+     * @param type Bukkit CreatureType to lookup.
+     * @return EntityType matching CreatureType given.
+     */
     public static EntityType valueOf(final CreatureType type) {
         return TYPE_MAP.get(type);
     }

@@ -1,6 +1,6 @@
 name: SuperSimpleSpawners
 main: com.dumptruckman.supersimplespawners.SuperSimpleSpawners
-version: 1.1d
+version: maven-version-number
 author: dumptruckman
 
 permissions:
