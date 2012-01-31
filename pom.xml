@@ -29,22 +29,6 @@
         </pluginRepository>
     </pluginRepositories>
 
-    <!-- Profiles are used to detect whether this is a local or Jenkins build
-and adjust the build number accordingly -->
-    <profiles>
-        <profile>
-            <id>jenkins</id>
-            <activation>
-                <property>
-                    <name>env.BUILD_NUMBER</name>
-                </property>
-            </activation>
-            <properties>
-                <project.build.number>${env.BUILD_NUMBER}</project.build.number>
-            </properties>
-        </profile>
-    </profiles>
-
     <build>
         <defaultGoal>clean package</defaultGoal>
         <plugins>
@@ -68,28 +52,6 @@ and adjust the build number accordingly -->
                         <manifestEntries>
                         </manifestEntries>
                     </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.google.code.maven-replacer-plugin</groupId>
-                <artifactId>maven-replacer-plugin</artifactId>
-                <version>1.3.8</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>replace</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <file>target/classes/plugin.yml</file>
-                    <replacements>
-                        <replacement>
-                            <token>maven-version-number</token>
-                            <value>${project.version}-b${project.build.number}</value>
-                        </replacement>
-                    </replacements>
                 </configuration>
             </plugin>
             <!-- Maven Source Plugin -->
