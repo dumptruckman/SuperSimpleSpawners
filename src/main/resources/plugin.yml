@@ -1,0 +1,4 @@
+name: SuperSimpleSpawners
+main: com.dumptruckman.supersimplespawners.SuperSimpleSpawners
+version: maven-version-number
+author: dumptruckman
