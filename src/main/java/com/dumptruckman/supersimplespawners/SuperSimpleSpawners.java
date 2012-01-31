@@ -1,6 +1,5 @@
 package com.dumptruckman.supersimplespawners;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,6 +16,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -31,7 +31,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     /**
      * Player's reach in blocks.
      */
-    private static final int PLAYER_REACH = 4;
+    private static final int PLAYER_REACH = 5;
     /**
      * Permission to be able to place spawn eggs as spawners.
      */
@@ -55,8 +55,10 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
     @Override
     public final void onEnable() {
-        Bukkit.getPluginManager().registerEvents(this, this);
-
+        PluginManager pm = this.getServer().getPluginManager();
+        pm.registerEvents(this, this);
+        pm.addPermission(CAN_PLACE);
+        pm.addPermission(CAN_DROP);
         this.getLogger().info("enabled.");
     }
 
@@ -73,6 +75,10 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 || event.getItem().getTypeId() != SPAWN_EGG
                 || !player.hasPermission(CAN_PLACE)
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+            return;
+        }
+        ItemStack itemInHand = player.getItemInHand();
+        if (EntityType.valueOf(itemInHand.getDurability()) == null) {
             return;
         }
         event.setCancelled(true);
@@ -95,7 +101,6 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 targetBlock.getZ());
         placedBlock.setType(Material.MOB_SPAWNER);
         CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
-        ItemStack itemInHand = player.getItemInHand();
         spawner.setCreatureType(EntityType.valueOf(
                 itemInHand.getDurability()).getType());
         itemInHand.setTypeId(0);
@@ -115,8 +120,13 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         CreatureSpawner spawner = (CreatureSpawner) block.getState();
-        ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1,
-                EntityType.valueOf(spawner.getCreatureType()).getId());
+        Short entityId = EntityType.valueOf(spawner.getCreatureType()).getId();
+        if (entityId == null) {
+            this.getLogger().warning("Unsupported spawner type, " +
+                    "nag dumptruckman to update this!");
+            return;
+        }
+        ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityId);
         block.getWorld().dropItemNaturally(block.getLocation(),
                 spawnEgg);
         block.setTypeId(0, true);
