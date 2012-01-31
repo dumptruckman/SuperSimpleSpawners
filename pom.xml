@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dumptruckman</groupId>
     <artifactId>SuperSimpleSpawners</artifactId>
-    <version>1.1</version>
+    <version>1.1b</version>
     <name>SuperSimpleSpawners</name>
     <description>Spawners from eggs.  Eggs from spawners.</description>
     <properties>

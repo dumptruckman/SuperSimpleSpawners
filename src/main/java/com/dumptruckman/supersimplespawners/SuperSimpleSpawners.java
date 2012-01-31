@@ -1,5 +1,6 @@
 package com.dumptruckman.supersimplespawners;
 
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -103,7 +104,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
         spawner.setCreatureType(EntityType.valueOf(
                 itemInHand.getDurability()).getType());
-        itemInHand.setTypeId(0);
+        if (placedBlock.getState() instanceof CreatureSpawner
+                && player.getGameMode().equals(GameMode.SURVIVAL)) {
+            if (itemInHand.getAmount() > 1) {
+                itemInHand.setAmount(itemInHand.getAmount() - 1);
+            } else {
+                player.getInventory().remove(itemInHand);
+            }
+        }
     }
 
     /**

@@ -1,4 +1,12 @@
 name: SuperSimpleSpawners
 main: com.dumptruckman.supersimplespawners.SuperSimpleSpawners
-version: 1.1
+version: 1.1b
 author: dumptruckman
+
+permissions:
+  supersimplespawners.*:
+    description: 'Gives all permissions for this plugin'
+    default: false
+    children:
+      supersimplespawners.place: true
+      supersimplespawners.drop: true
