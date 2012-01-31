@@ -109,10 +109,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             if (itemInHand.getAmount() > 1) {
                 itemInHand.setAmount(itemInHand.getAmount() - 1);
             } else {
-                InventoryTools.remove(player.getInventory(),
-                        itemInHand.getType(),
-                        itemInHand.getDurability(),
-                        1);
+                player.getInventory().setItemInHand(null);
             }
             player.updateInventory();
         }
