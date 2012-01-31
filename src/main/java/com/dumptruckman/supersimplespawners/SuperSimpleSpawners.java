@@ -68,7 +68,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      *
      * @param event The event for said left or right clicks.
      */
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.MONITOR)
     public final void playerInteract(final PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (event.isCancelled()
@@ -119,7 +119,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      *
      * @param event The event for said breakage.
      */
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.MONITOR)
     public final void blockBreak(final BlockBreakEvent event) {
         Block block = event.getBlock();
         if (event.isCancelled()
