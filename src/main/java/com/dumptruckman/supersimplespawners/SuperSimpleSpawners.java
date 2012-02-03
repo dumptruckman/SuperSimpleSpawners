@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -79,7 +80,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         ItemStack itemInHand = player.getItemInHand();
-        if (EntityType.valueOf(itemInHand.getDurability()) == null) {
+        if (CreatureType.fromId(itemInHand.getDurability()) == null) {
             return;
         }
         event.setCancelled(true);
@@ -102,8 +103,8 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 targetBlock.getZ());
         placedBlock.setType(Material.MOB_SPAWNER);
         CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
-        spawner.setCreatureType(EntityType.valueOf(
-                itemInHand.getDurability()).getType());
+        spawner.setCreatureType(CreatureType.fromId(
+                itemInHand.getDurability()));
         if (placedBlock.getState() instanceof CreatureSpawner
                 && player.getGameMode().equals(GameMode.SURVIVAL)) {
             if (itemInHand.getAmount() > 1) {
@@ -129,7 +130,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         CreatureSpawner spawner = (CreatureSpawner) block.getState();
-        Short entityId = EntityType.valueOf(spawner.getCreatureType()).getId();
+        Short entityId = spawner.getCreatureType().getTypeId();
         if (entityId == null) {
             this.getLogger().warning("Unsupported spawner type, "
                     + "nag dumptruckman to update this!");
