@@ -2,11 +2,3 @@ name: SuperSimpleSpawners
 main: com.dumptruckman.supersimplespawners.SuperSimpleSpawners
 version: maven-version-number
 author: dumptruckman
-
-permissions:
-  supersimplespawners.*:
-    description: 'Gives all permissions for this plugin'
-    default: false
-    children:
-      supersimplespawners.place: true
-      supersimplespawners.drop: true

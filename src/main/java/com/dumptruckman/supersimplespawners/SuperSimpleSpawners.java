@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.CreatureType;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -21,6 +22,9 @@ import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * EGG PLACE SPAWNER.  SPAWNER DROP EGG.
  */
@@ -34,34 +38,72 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      * Player's reach in blocks.
      */
     private static final int PLAYER_REACH = 5;
+
+    /**
+     * Permission to be able to place spawn eggs as spawners.
+     */
+    private static final Permission ALL_PERMS = new Permission(
+            "sss.*",
+            "Gives all permissions for this plugin.",
+            PermissionDefault.FALSE);
+
     /**
      * Permission to be able to place spawn eggs as spawners.
      */
     private static final Permission CAN_PLACE = new Permission(
-            "supersimplespawners.place",
+            "sss.place.*",
             "Spawn eggs place spawners.",
             PermissionDefault.FALSE);
     /**
      * Permission to have spawners drop as spawn eggs.
      */
     private static final Permission CAN_DROP = new Permission(
-            "supersimplespawners.drop",
+            "sss.drop.*",
             "Spawners drop spawn eggs",
             PermissionDefault.FALSE);
 
-    @Override
-    public final void onDisable() {
-        // Display disable message/version info
-        this.getLogger().info("disabled.");
-    }
+    /**
+     * Permission map for placing specific spawners.
+     */
+    private static final Map<EntityType, Permission> PLACE_SPECIFIC = new HashMap<EntityType, Permission>();
+
+    /**
+     * Permission map for dropping specific spawn eggs.
+     */
+    private static final Map<EntityType, Permission> DROP_SPECIFIC = new HashMap<EntityType, Permission>();
 
     @Override
     public final void onEnable() {
+        this.getServer().getPluginManager().registerEvents(this, this);
+        registerPermissions();
+        this.getLogger().info("enabled.");
+    }
+
+    private void registerPermissions() {
         PluginManager pm = this.getServer().getPluginManager();
-        pm.registerEvents(this, this);
+
+        for (EntityType entityType : EntityType.values()) {
+            if (entityType.isAlive() && entityType.isSpawnable()) {
+                String name = entityType.getName().toLowerCase();
+
+                Permission drop = new Permission("sss.drop." + name,
+                        "Spawners drop spawn eggs for " + name, PermissionDefault.FALSE);
+                drop.addParent(CAN_DROP, true);
+                pm.addPermission(drop);
+                DROP_SPECIFIC.put(entityType, drop);
+
+                Permission place = new Permission("sss.place." + name,
+                        "Spawn eggs place spawners for " + name, PermissionDefault.FALSE);
+                place.addParent(CAN_PLACE, true);
+                pm.addPermission(place);
+                PLACE_SPECIFIC.put(entityType, place);
+            }
+        }
+        CAN_DROP.addParent(ALL_PERMS, true);
+        CAN_PLACE.addParent(ALL_PERMS, true);
         pm.addPermission(CAN_PLACE);
         pm.addPermission(CAN_DROP);
-        this.getLogger().info("enabled.");
+        pm.addPermission(ALL_PERMS);
     }
 
     /**
@@ -75,12 +117,15 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         if (event.isCancelled()
                 || !event.hasItem()
                 || event.getItem().getTypeId() != SPAWN_EGG
-                || !player.hasPermission(CAN_PLACE)
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
             return;
         }
         ItemStack itemInHand = player.getItemInHand();
-        if (CreatureType.fromId(itemInHand.getDurability()) == null) {
+        EntityType entityType = EntityType.fromId(itemInHand.getDurability());
+        if (entityType == null || !entityType.isAlive() || !entityType.isSpawnable()) {
+            return;
+        }
+        if (!player.hasPermission(PLACE_SPECIFIC.get(entityType))) {
             return;
         }
         event.setCancelled(true);
@@ -103,8 +148,8 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 targetBlock.getZ());
         placedBlock.setType(Material.MOB_SPAWNER);
         CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
-        spawner.setCreatureType(CreatureType.fromId(
-                itemInHand.getDurability()));
+        spawner.setSpawnedType(entityType);
+        spawner.update();
         if (placedBlock.getState() instanceof CreatureSpawner
                 && player.getGameMode().equals(GameMode.SURVIVAL)) {
             if (itemInHand.getAmount() > 1) {
@@ -125,18 +170,15 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     public final void blockBreak(final BlockBreakEvent event) {
         Block block = event.getBlock();
         if (event.isCancelled()
-                || !block.getType().equals(Material.MOB_SPAWNER)
-                || !event.getPlayer().hasPermission(CAN_DROP)) {
+                || !block.getType().equals(Material.MOB_SPAWNER)) {
             return;
         }
         CreatureSpawner spawner = (CreatureSpawner) block.getState();
-        Short entityId = spawner.getCreatureType().getTypeId();
-        if (entityId == null) {
-            this.getLogger().warning("Unsupported spawner type, "
-                    + "nag dumptruckman to update this!");
+        EntityType entityType = spawner.getSpawnedType();
+        if (!event.getPlayer().hasPermission(DROP_SPECIFIC.get(entityType))) {
             return;
         }
-        ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityId);
+        ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityType.getTypeId());
         block.getWorld().dropItemNaturally(block.getLocation(),
                 spawnEgg);
         block.setTypeId(0, true);
