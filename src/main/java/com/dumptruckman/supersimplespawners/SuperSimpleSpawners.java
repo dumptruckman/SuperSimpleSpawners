@@ -1,10 +1,14 @@
 package com.dumptruckman.supersimplespawners;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -14,6 +18,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.Permission;
@@ -145,9 +150,18 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 targetBlock.getX(),
                 targetBlock.getY() + 1,
                 targetBlock.getZ());
+        BlockState previousState = placedBlock.getState();
         placedBlock.setType(Material.MOB_SPAWNER);
         CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
         spawner.setSpawnedType(entityType);
+        BlockPlaceEvent bpEvent = new BlockPlaceEvent(placedBlock, previousState, targetBlock,
+                new ItemStack(Material.MOB_SPAWNER, 1, entityType.getTypeId()),
+                player, canBuild(player, placedBlock.getX(), placedBlock.getZ()));
+        Bukkit.getPluginManager().callEvent(bpEvent);
+        if (bpEvent.isCancelled()) {
+            previousState.update(true);
+            return;
+        }
         spawner.update();
         if (placedBlock.getState() instanceof CreatureSpawner
                 && player.getGameMode().equals(GameMode.SURVIVAL)) {
@@ -181,5 +195,28 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         block.getWorld().dropItemNaturally(block.getLocation(),
                 spawnEgg);
         block.setTypeId(0, true);
+    }
+
+    /**
+     * Modified canBuild from CraftBukkit.  Basically checks to make sure they're not within spawn protection.
+     *
+     * @param player The player to check for build access
+     * @param x The x coord of the placed block
+     * @param z The y coord of the placed block
+     * @return true if player is not trying to build in spawn radius or is op.
+     */
+    private static boolean canBuild(Player player, int x, int z) {
+        int spawnSize = Bukkit.getServer().getSpawnRadius();
+        World world = player.getWorld();
+
+        if (!world.equals(Bukkit.getWorlds().get(0))) return true;
+        if (spawnSize <= 0) return true;
+        if (player.isOp()) return true;
+
+        Chunk chunkcoordinates = player.getLocation().getChunk();
+
+        int distanceFromSpawn = (int) Math.max(Math.abs(x - chunkcoordinates.getX()),
+                Math.abs(z - chunkcoordinates.getZ()));
+        return distanceFromSpawn > spawnSize;
     }
 }
