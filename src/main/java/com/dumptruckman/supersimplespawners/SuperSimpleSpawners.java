@@ -115,11 +115,10 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      *
      * @param event The event for said left or right clicks.
      */
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.LOWEST)
     public final void playerInteract(final PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (event.isCancelled()
-                || !event.hasItem()
+        if (!event.hasItem()
                 || event.getItem().getTypeId() != SPAWN_EGG
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
             return;
@@ -153,16 +152,22 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         BlockState previousState = placedBlock.getState();
         placedBlock.setType(Material.MOB_SPAWNER);
         CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
-        spawner.setSpawnedType(entityType);
         BlockPlaceEvent bpEvent = new BlockPlaceEvent(placedBlock, previousState, targetBlock,
                 new ItemStack(Material.MOB_SPAWNER, 1, entityType.getTypeId()),
                 player, canBuild(player, placedBlock.getX(), placedBlock.getZ()));
         Bukkit.getPluginManager().callEvent(bpEvent);
-        if (bpEvent.isCancelled()) {
+        itemInHand = bpEvent.getItemInHand();
+        if (bpEvent.isCancelled() || itemInHand == null || itemInHand.getType() != Material.MOB_SPAWNER) {
             previousState.update(true);
             return;
         }
-        spawner.update();
+        entityType = EntityType.fromId(bpEvent.getItemInHand().getDurability());
+        if (entityType == null) {
+            previousState.update(true);
+            return;
+        }
+        spawner.setSpawnedType(entityType);
+        spawner.update(true);
         if (placedBlock.getState() instanceof CreatureSpawner
                 && player.getGameMode().equals(GameMode.SURVIVAL)) {
             if (itemInHand.getAmount() > 1) {
