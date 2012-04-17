@@ -156,12 +156,12 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 new ItemStack(Material.MOB_SPAWNER, 1, entityType.getTypeId()),
                 player, canBuild(player, placedBlock.getX(), placedBlock.getZ()));
         Bukkit.getPluginManager().callEvent(bpEvent);
-        itemInHand = bpEvent.getItemInHand();
-        if (bpEvent.isCancelled() || itemInHand == null || itemInHand.getType() != Material.MOB_SPAWNER) {
+        ItemStack itemInHandFake = bpEvent.getItemInHand();
+        if (bpEvent.isCancelled() || itemInHandFake == null || itemInHandFake.getType() != Material.MOB_SPAWNER) {
             previousState.update(true);
             return;
         }
-        entityType = EntityType.fromId(bpEvent.getItemInHand().getDurability());
+        entityType = EntityType.fromId(itemInHandFake.getDurability());
         if (entityType == null) {
             previousState.update(true);
             return;
