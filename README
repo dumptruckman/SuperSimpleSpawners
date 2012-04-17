@@ -1,9 +1,17 @@
 SuperSimpleSpawners
 ===================
 
-Spawners drop eggs (permission: supersimplespawners.drop)
+Spawners drop eggs (permission: sss.drop.*)
 
-Eggs place spawners (permission: supersimplespawners.place)
+Eggs place spawners (permission: sss.place.*)
+
+All of above (permission: sss.*)
 
 EVEN OPS NEED THESE PERMISSIONS!
-EVEN GROUPS WITH '*' PERMISSIONS NEED THESE PERMISSIONS!
+
+Specific create permissions
+  sss.drop.entity_type
+  sss.place.entity_type
+
+entity_type needs to be the lowercase form of the names found here:
+  http://jd.bukkit.org/apidocs/org/bukkit/entity/EntityType.html
