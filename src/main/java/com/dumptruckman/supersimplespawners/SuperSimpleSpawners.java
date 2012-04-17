@@ -118,6 +118,8 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public final void playerInteract(final PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        // Check if this is an event the plugin should be interested in, a right click with a
+        // spawn egg, if it isn't stop here.
         if (!event.hasItem()
                 || event.getItem().getTypeId() != SPAWN_EGG
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
@@ -125,19 +127,29 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         }
         ItemStack itemInHand = player.getItemInHand();
         EntityType entityType = EntityType.fromId(itemInHand.getDurability());
-        if (entityType == null || !entityType.isAlive() || !entityType.isSpawnable()) {
+
+        // Check if the Metadata on the egg being placed is valid for a spawner, if it
+        // isn't stop here.
+        if (entityType == null
+                || !entityType.isAlive()
+                || !entityType.isSpawnable()) {
             return;
         }
+        // Check if the user has the permission to place the egg they're attempting to
+        // place based on sss.place.entity_type, if not stop here.
         if (!player.hasPermission(PLACE_SPECIFIC.get(entityType))) {
             return;
         }
+        // Prevent the normal spawn egg behaviours
         event.setCancelled(true);
         event.setUseItemInHand(Event.Result.DENY);
+        // Get the block that the player is attempting to place on and ensure
+        // that the block is valid
         Block targetBlock = player.getTargetBlock(null, PLAYER_REACH);
-        if (targetBlock.getType().equals(Material.AIR)
-                || !event.getBlockFace().equals(BlockFace.UP)) {
+        if (targetBlock.getType().equals(Material.AIR)) {
             return;
         }
+        // Ensure that the player is not placing the block in their feet.
         Location playerLocation = player.getLocation();
         if (playerLocation.getWorld().getBlockAt(
                 playerLocation.getBlockX(),
@@ -145,29 +157,80 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 playerLocation.getBlockZ()).equals(targetBlock)) {
             return;
         }
-        Block placedBlock = targetBlock.getWorld().getBlockAt(
-                targetBlock.getX(),
-                targetBlock.getY() + 1,
-                targetBlock.getZ());
+        // Figure out which side of the block was clicked on and use that to determine
+        // where to place the spawner.
+        Location placedBlockLocation = targetBlock.getLocation();
+        switch (event.getBlockFace()) {
+            case UP:
+                placedBlockLocation.add(0, 1, 0);
+                break;
+            case DOWN:
+                placedBlockLocation.add(0, -1, 0);
+                break;
+            case NORTH:
+                placedBlockLocation.add(-1, 0, 0);
+                break;
+            case EAST:
+                placedBlockLocation.add(0, 0, -1);
+                break;
+            case SOUTH:
+                placedBlockLocation.add(1, 0, 0);
+                break;
+            case WEST:
+                placedBlockLocation.add(0, 0, 1);
+                break;
+            default:
+                return;
+        }
+        // Select the block we should be changing into a spawner and ensure it's air,
+        // water, or lava which are blocks you can normally put items in.
+        Block placedBlock = targetBlock.getWorld().getBlockAt(placedBlockLocation);
+        if (placedBlock.getType() != Material.AIR
+                && placedBlock.getType() != Material.WATER
+                && placedBlock.getType() != Material.LAVA
+                && placedBlock.getType() != Material.STATIONARY_WATER
+                && placedBlock.getType() != Material.STATIONARY_LAVA) {
+            return;
+        }
+        // Save the previous state of the block being manipulated, in case the fake block place
+        // event we throw is canceled.
         BlockState previousState = placedBlock.getState();
+        // Replace the placed block with a spawner cage.
         placedBlock.setType(Material.MOB_SPAWNER);
         CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
+        // We're going to change the item type to a monster spawner so it looks like that's what the
+        // player is placing for the fake block place event.
+        itemInHand.setType(Material.MOB_SPAWNER);
+        // Create a block place event for compatibility, then call it.
         BlockPlaceEvent bpEvent = new BlockPlaceEvent(placedBlock, previousState, targetBlock,
-                new ItemStack(Material.MOB_SPAWNER, 1, entityType.getTypeId()),
-                player, canBuild(player, placedBlock.getX(), placedBlock.getZ()));
+                itemInHand, player, canBuild(player, placedBlock.getX(), placedBlock.getZ()));
         Bukkit.getPluginManager().callEvent(bpEvent);
-        ItemStack itemInHandFake = bpEvent.getItemInHand();
-        if (bpEvent.isCancelled() || itemInHandFake == null || itemInHandFake.getType() != Material.MOB_SPAWNER) {
+        // Now we'll switch that monster spawner back to spawn eggs so the player sees no change
+        if (itemInHand.getType() == Material.MOB_SPAWNER) {
+            itemInHand.setType(Material.MONSTER_EGG);
+        }
+        // If the block place event was cancelled, the item was changed to something other than
+        // a spawner, or the player is trying to place in spawn protection we need to stop here.
+        if (bpEvent.isCancelled()
+                || itemInHand.getType() != Material.MONSTER_EGG
+                || !bpEvent.canBuild()) {
+            // We'll revert the block back to what it was by updating the previous state.
             previousState.update(true);
             return;
         }
-        entityType = EntityType.fromId(itemInHandFake.getDurability());
-        if (entityType == null) {
+        entityType = EntityType.fromId(itemInHand.getDurability());
+        // We need to ensure that the item in their hand is still a valid monster spawner egg.
+        if (entityType == null
+                || !entityType.isAlive()
+                || !entityType.isSpawnable()) {
+            // We'll revert the block back to what it was by updating the previous state.
             previousState.update(true);
             return;
         }
+        // Update the spawner to spawn the entity type of the egg held in hand.
         spawner.setSpawnedType(entityType);
         spawner.update(true);
+        // Remove one spawn egg from the players hand if they're not in creative mode.
         if (placedBlock.getState() instanceof CreatureSpawner
                 && player.getGameMode().equals(GameMode.SURVIVAL)) {
             if (itemInHand.getAmount() > 1) {
