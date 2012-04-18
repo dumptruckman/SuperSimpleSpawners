@@ -47,11 +47,6 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     private static final int PLAYER_REACH = 5;
 
     /**
-     * Represents the config key for silk touch.
-     */
-    private static final String SILK_TOUCH = "silk_touch";
-
-    /**
      * Permission to be able to place spawn eggs as spawners.
      */
     private static final Permission ALL_PERMS = new Permission(
@@ -75,6 +70,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             PermissionDefault.FALSE);
 
     /**
+     * Permission to have spawners drop as spawn eggs.
+     */
+    private static final Permission SILK_TOUCH = new Permission(
+            "sss.silk_touch",
+            "Forces the player to have silk touch enchant to get drops from spawners",
+            PermissionDefault.FALSE);
+
+    /**
      * Permission map for placing specific spawners.
      */
     private static final Map<EntityType, Permission> PLACE_SPECIFIC = new HashMap<EntityType, Permission>();
@@ -88,15 +91,6 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     public final void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
         registerPermissions();
-        if (getConfig().get(SILK_TOUCH) == null) {
-            getConfig().set(SILK_TOUCH, false);
-        }
-        getConfig().options().header("Enable silk_touch to make it so breaking spawners requires a silk touch tool.");
-        try {
-            getConfig().save(new File(getDataFolder(), "config.yml"));
-        } catch (IOException e) {
-            getLogger().warning("Could not create config file!");
-        }
         getLogger().info("enabled.");
     }
 
@@ -125,6 +119,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         pm.addPermission(CAN_PLACE);
         pm.addPermission(CAN_DROP);
         pm.addPermission(ALL_PERMS);
+        pm.addPermission(SILK_TOUCH);
     }
 
     /**
@@ -272,7 +267,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (getConfig().getBoolean(SILK_TOUCH, false)) {
+        if (player.hasPermission(SILK_TOUCH)) {
             ItemStack itemHeld = player.getItemInHand();
             if (itemHeld == null || !itemHeld.containsEnchantment(Enchantment.SILK_TOUCH)) {
                 return;
