@@ -10,6 +10,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -26,6 +27,8 @@ import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,6 +45,11 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      * Player's reach in blocks.
      */
     private static final int PLAYER_REACH = 5;
+
+    /**
+     * Represents the config key for silk touch.
+     */
+    private static final String SILK_TOUCH = "silk_touch";
 
     /**
      * Permission to be able to place spawn eggs as spawners.
@@ -78,9 +86,18 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
     @Override
     public final void onEnable() {
-        this.getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(this, this);
         registerPermissions();
-        this.getLogger().info("enabled.");
+        if (getConfig().get(SILK_TOUCH) == null) {
+            getConfig().set(SILK_TOUCH, false);
+        }
+        getConfig().options().header("Enable silk_touch to make it so breaking spawners requires a silk touch tool.");
+        try {
+            getConfig().save(new File(getDataFolder(), "config.yml"));
+        } catch (IOException e) {
+            getLogger().warning("Could not create config file!");
+        }
+        getLogger().info("enabled.");
     }
 
     private void registerPermissions() {
@@ -254,12 +271,19 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 || !block.getType().equals(Material.MOB_SPAWNER)) {
             return;
         }
+        Player player = event.getPlayer();
+        if (getConfig().getBoolean(SILK_TOUCH, false)) {
+            ItemStack itemHeld = player.getItemInHand();
+            if (itemHeld == null || !itemHeld.containsEnchantment(Enchantment.SILK_TOUCH)) {
+                return;
+            }
+        }
         CreatureSpawner spawner = (CreatureSpawner) block.getState();
         EntityType entityType = spawner.getSpawnedType();
-        if (!event.getPlayer().hasPermission(DROP_SPECIFIC.get(entityType))) {
+        if (!player.hasPermission(DROP_SPECIFIC.get(entityType))) {
             return;
         }
-        if (event.getPlayer().getGameMode() == GameMode.SURVIVAL) {
+        if (player.getGameMode() == GameMode.SURVIVAL) {
             ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityType.getTypeId());
             block.getWorld().dropItemNaturally(block.getLocation(),
                     spawnEgg);
