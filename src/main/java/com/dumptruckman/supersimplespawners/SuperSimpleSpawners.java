@@ -3,11 +3,9 @@ package com.dumptruckman.supersimplespawners;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
@@ -21,16 +19,29 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Bed;
+import org.bukkit.material.Button;
+import org.bukkit.material.Cake;
+import org.bukkit.material.Cauldron;
+import org.bukkit.material.Diode;
+import org.bukkit.material.Door;
+import org.bukkit.material.FurnaceAndDispenser;
+import org.bukkit.material.Gate;
+import org.bukkit.material.Lever;
+import org.bukkit.material.MaterialData;
+import org.bukkit.material.TrapDoor;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * EGG PLACE SPAWNER.  SPAWNER DROP EGG.
@@ -41,10 +52,49 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      * Spawn Egg item id.
      */
     private static final int SPAWN_EGG = 383;
+
     /**
-     * Player's reach in blocks.
+     * Contains a set of non-solid blocks, which you cannot
+     * place blocks on, but you can place blocks in.
      */
-    private static final int PLAYER_REACH = 5;
+    private static final Set<Material> NON_SOLID_BLOCKS = EnumSet.noneOf(Material.class);
+
+    /**
+     * Contains a set of blocks that are valid to place on
+     * and are REPLACED instead of placed on.
+     */
+    private static final Set<Material> REPLACEABLE_BLOCKS = EnumSet.noneOf(Material.class);
+
+    /**
+     * Contains a set of MaterialData classes that indicate
+     * block types that are interactive and cannot be placed on.
+     */
+    private static final Set<Class<? extends MaterialData>> INTERACTIVE_MATERIALS =
+            new HashSet<Class<? extends MaterialData>>();
+
+    static {
+        NON_SOLID_BLOCKS.add(Material.AIR);
+        NON_SOLID_BLOCKS.add(Material.WATER);
+        NON_SOLID_BLOCKS.add(Material.STATIONARY_WATER);
+        NON_SOLID_BLOCKS.add(Material.LAVA);
+        NON_SOLID_BLOCKS.add(Material.STATIONARY_LAVA);
+
+        REPLACEABLE_BLOCKS.add(Material.SNOW);
+        REPLACEABLE_BLOCKS.add(Material.LONG_GRASS);
+        REPLACEABLE_BLOCKS.add(Material.FIRE);
+        REPLACEABLE_BLOCKS.add(Material.VINE);
+
+        INTERACTIVE_MATERIALS.add(Bed.class);
+        INTERACTIVE_MATERIALS.add(Cake.class);
+        INTERACTIVE_MATERIALS.add(Cauldron.class);
+        INTERACTIVE_MATERIALS.add(Diode.class);
+        INTERACTIVE_MATERIALS.add(Door.class);
+        INTERACTIVE_MATERIALS.add(FurnaceAndDispenser.class);
+        INTERACTIVE_MATERIALS.add(Gate.class);
+        INTERACTIVE_MATERIALS.add(Button.class);
+        INTERACTIVE_MATERIALS.add(Lever.class);
+        INTERACTIVE_MATERIALS.add(TrapDoor.class);
+    }
 
     /**
      * Permission to be able to place spawn eggs as spawners.
@@ -134,7 +184,8 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // spawn egg, if it isn't stop here.
         if (!event.hasItem()
                 || event.getItem().getTypeId() != SPAWN_EGG
-                || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+                || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)
+                || !event.hasBlock()) {
             return;
         }
         ItemStack itemInHand = player.getItemInHand();
@@ -152,56 +203,41 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         if (!player.hasPermission(PLACE_SPECIFIC.get(entityType))) {
             return;
         }
+
+        // Get the block that the player is attempting to place on and ensure
+        // that the block is valid
+        Block targetBlock = event.getClickedBlock();
+        if (NON_SOLID_BLOCKS.contains(targetBlock.getType())
+                || INTERACTIVE_MATERIALS.contains(targetBlock.getState().getData().getClass())
+                || targetBlock.getState() instanceof InventoryHolder) {
+            return;
+        }
+
         // Prevent the normal spawn egg behaviours
         event.setCancelled(true);
         event.setUseItemInHand(Event.Result.DENY);
-        // Get the block that the player is attempting to place on and ensure
-        // that the block is valid
-        Block targetBlock = player.getTargetBlock(null, PLAYER_REACH);
-        if (targetBlock.getType().equals(Material.AIR)) {
-            return;
-        }
-        // Ensure that the player is not placing the block in their feet.
-        Location playerLocation = player.getLocation();
-        if (playerLocation.getWorld().getBlockAt(
-                playerLocation.getBlockX(),
-                playerLocation.getBlockY() - 1,
-                playerLocation.getBlockZ()).equals(targetBlock)) {
-            return;
-        }
+
         // Figure out which side of the block was clicked on and use that to determine
-        // where to place the spawner.
-        Location placedBlockLocation = targetBlock.getLocation();
-        switch (event.getBlockFace()) {
-            case UP:
-                placedBlockLocation.add(0, 1, 0);
-                break;
-            case DOWN:
-                placedBlockLocation.add(0, -1, 0);
-                break;
-            case NORTH:
-                placedBlockLocation.add(-1, 0, 0);
-                break;
-            case EAST:
-                placedBlockLocation.add(0, 0, -1);
-                break;
-            case SOUTH:
-                placedBlockLocation.add(1, 0, 0);
-                break;
-            case WEST:
-                placedBlockLocation.add(0, 0, 1);
-                break;
-            default:
-                return;
+        // where to place the spawner.  However, if the block is a type that normally gets
+        // replaced when you place on it, we'll use that position.
+        Block placedBlock;
+        if (REPLACEABLE_BLOCKS.contains(targetBlock.getType())) {
+            placedBlock = targetBlock;
+        } else {
+            placedBlock = targetBlock.getRelative(event.getBlockFace());
         }
+
+        // Ensure that the player is not placing the block in themselves.
+        Block playerLocation = player.getLocation().getBlock();
+        if (playerLocation.getRelative(0, -1, 0).equals(placedBlock)
+                || playerLocation.equals(placedBlock)) {
+            return;
+        }
+
         // Select the block we should be changing into a spawner and ensure it's air,
         // water, or lava which are blocks you can normally put items in.
-        Block placedBlock = targetBlock.getWorld().getBlockAt(placedBlockLocation);
-        if (placedBlock.getType() != Material.AIR
-                && placedBlock.getType() != Material.WATER
-                && placedBlock.getType() != Material.LAVA
-                && placedBlock.getType() != Material.STATIONARY_WATER
-                && placedBlock.getType() != Material.STATIONARY_LAVA) {
+        if (!NON_SOLID_BLOCKS.contains(placedBlock.getType())
+                && !REPLACEABLE_BLOCKS.contains(placedBlock.getType())) {
             return;
         }
         // Save the previous state of the block being manipulated, in case the fake block place
