@@ -213,6 +213,10 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         
+        // Get the block that the player is attempting to place on and ensure
+        // that the block isn't interactive, if it is then use the block
+        // example: workbench
+        // if the block is interactive and the player is sneaking, place like normal
         if (INTERACTIVE_MATERIALS.contains(targetBlock.getType()) && !player.isSneaking()) {
             return;
         }
