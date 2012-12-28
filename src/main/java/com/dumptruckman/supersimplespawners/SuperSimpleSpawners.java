@@ -1,5 +1,10 @@
 package com.dumptruckman.supersimplespawners;
 
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
@@ -21,27 +26,10 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Bed;
-import org.bukkit.material.Button;
-import org.bukkit.material.Cake;
-import org.bukkit.material.Cauldron;
-import org.bukkit.material.Diode;
-import org.bukkit.material.Door;
-import org.bukkit.material.FurnaceAndDispenser;
-import org.bukkit.material.Gate;
-import org.bukkit.material.Lever;
-import org.bukkit.material.MaterialData;
-import org.bukkit.material.TrapDoor;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * EGG PLACE SPAWNER.  SPAWNER DROP EGG.
@@ -69,8 +57,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      * Contains a set of MaterialData classes that indicate
      * block types that are interactive and cannot be placed on.
      */
-    private static final Set<Class<? extends MaterialData>> INTERACTIVE_MATERIALS =
-            new HashSet<Class<? extends MaterialData>>();
+    private static final Set<Material> INTERACTIVE_MATERIALS = EnumSet.noneOf(Material.class);
 
     static {
         NON_SOLID_BLOCKS.add(Material.AIR);
@@ -84,16 +71,30 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         REPLACEABLE_BLOCKS.add(Material.FIRE);
         REPLACEABLE_BLOCKS.add(Material.VINE);
 
-        INTERACTIVE_MATERIALS.add(Bed.class);
-        INTERACTIVE_MATERIALS.add(Cake.class);
-        INTERACTIVE_MATERIALS.add(Cauldron.class);
-        INTERACTIVE_MATERIALS.add(Diode.class);
-        INTERACTIVE_MATERIALS.add(Door.class);
-        INTERACTIVE_MATERIALS.add(FurnaceAndDispenser.class);
-        INTERACTIVE_MATERIALS.add(Gate.class);
-        INTERACTIVE_MATERIALS.add(Button.class);
-        INTERACTIVE_MATERIALS.add(Lever.class);
-        INTERACTIVE_MATERIALS.add(TrapDoor.class);
+        INTERACTIVE_MATERIALS.add(Material.ANVIL);
+        INTERACTIVE_MATERIALS.add(Material.BEACON);
+        INTERACTIVE_MATERIALS.add(Material.BED_BLOCK);
+        INTERACTIVE_MATERIALS.add(Material.BREWING_STAND);
+        INTERACTIVE_MATERIALS.add(Material.BURNING_FURNACE);
+        INTERACTIVE_MATERIALS.add(Material.CAKE_BLOCK);
+        INTERACTIVE_MATERIALS.add(Material.COMMAND);
+        INTERACTIVE_MATERIALS.add(Material.CHEST);
+        INTERACTIVE_MATERIALS.add(Material.DIODE_BLOCK_OFF);
+        INTERACTIVE_MATERIALS.add(Material.DIODE_BLOCK_ON);
+        INTERACTIVE_MATERIALS.add(Material.DISPENSER);
+        INTERACTIVE_MATERIALS.add(Material.ENCHANTMENT_TABLE);
+        INTERACTIVE_MATERIALS.add(Material.ENDER_CHEST);
+        INTERACTIVE_MATERIALS.add(Material.FENCE_GATE);
+        INTERACTIVE_MATERIALS.add(Material.FURNACE);
+        INTERACTIVE_MATERIALS.add(Material.IRON_DOOR_BLOCK);
+        INTERACTIVE_MATERIALS.add(Material.JUKEBOX);
+        INTERACTIVE_MATERIALS.add(Material.LEVER);
+        INTERACTIVE_MATERIALS.add(Material.NOTE_BLOCK);
+        INTERACTIVE_MATERIALS.add(Material.STONE_BUTTON);
+        INTERACTIVE_MATERIALS.add(Material.TRAP_DOOR);
+        INTERACTIVE_MATERIALS.add(Material.WOOD_BUTTON);
+        INTERACTIVE_MATERIALS.add(Material.WOODEN_DOOR);
+        INTERACTIVE_MATERIALS.add(Material.WORKBENCH);
     }
 
     /**
@@ -208,7 +209,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // that the block is valid
         Block targetBlock = event.getClickedBlock();
         if (NON_SOLID_BLOCKS.contains(targetBlock.getType())
-                || INTERACTIVE_MATERIALS.contains(targetBlock.getState().getData().getClass())
+                || INTERACTIVE_MATERIALS.contains(targetBlock.getType())
                 || targetBlock.getState() instanceof InventoryHolder) {
             return;
         }
