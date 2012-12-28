@@ -209,8 +209,11 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // that the block is valid
         Block targetBlock = event.getClickedBlock();
         if (NON_SOLID_BLOCKS.contains(targetBlock.getType())
-                || INTERACTIVE_MATERIALS.contains(targetBlock.getType())
                 || targetBlock.getState() instanceof InventoryHolder) {
+            return;
+        }
+        
+        if (INTERACTIVE_MATERIALS.contains(targetBlock.getType()) && !player.isSneaking()) {
             return;
         }
 
