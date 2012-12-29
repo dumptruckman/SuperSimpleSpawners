@@ -2,6 +2,7 @@ package com.dumptruckman.supersimplespawners;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,6 +41,16 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      * Spawn Egg item id.
      */
     private static final int SPAWN_EGG = 383;
+    
+    /**
+     * Commands
+     */
+    private final Commands cmdExecutor = new Commands(this);
+    
+    /**
+     * Config
+     */
+    private Config config = new Config(this);
 
     /**
      * Contains a set of non-solid blocks, which you cannot
@@ -140,6 +151,9 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
     @Override
     public final void onEnable() {
+        getCommand("supersimplespawners").setExecutor(this.cmdExecutor);
+        getCommand("sss").setExecutor(this.cmdExecutor);
+        this.config.loadConfig();
         getServer().getPluginManager().registerEvents(this, this);
         registerPermissions();
         getLogger().info("enabled.");
@@ -351,5 +365,51 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         int distanceFromSpawn = (int) Math.max(Math.abs(x - chunkcoordinates.getX()),
                 Math.abs(z - chunkcoordinates.getZ()));
         return distanceFromSpawn > spawnSize;
+    }
+    
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        
+    	// If the explosion is null or is cancelled then it
+    	// will not effect the spawner
+    	if ((event == null) || (event.isCancelled())) {
+            return;
+         }
+    	
+    	// If explosion drops is enabled in the config
+    	// when spawners are destroyed by explosions
+    	// the correct egg for that spawner will drop
+    	// and the spawner will be replaced with air.
+    	if (this.config.getExplosionDrops()) {
+    		
+    	List<Block> block = event.blockList();
+        int s = block.size();
+        
+        for (int i = 0; i < s; i++)
+        {
+              if (block.get(i).getType().equals(Material.MOB_SPAWNER)) {
+            	  CreatureSpawner spawner = (CreatureSpawner) block.get(i).getState();
+            	  
+                  EntityType entityType = spawner.getSpawnedType();
+            	  ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityType.getTypeId());
+            	  
+                  block.get(i).getWorld().dropItemNaturally(block.get(i).getLocation(), spawnEgg);
+                  block.get(i).setTypeId(0, true);
+              }
+              else
+              {
+                 continue;
+              }
+           
+           block.remove(block.get(i));
+           i--;
+           s--;
+        }
+    	}
+    }
+    
+    public boolean reload()
+    {
+      return this.config.loadConfig();
     }
 }
