@@ -10,10 +10,17 @@ public final class Config
   private SuperSimpleSpawners plugin;
   private static String pluginName;
   private static String pluginVersion;
+
+ /**
+  * File handling
+  */
   private static String directory = "plugins" + File.separator + "SuperSimpleSpawners" + File.separator;
   private File configFile = new File(directory + "config.yml");
   private YamlConfiguration bukkitConfig = new YamlConfiguration();
 
+ /**
+  * Default Setting
+  */
   private boolean explosionDrops = false;
 
   public Config(SuperSimpleSpawners plugin)
