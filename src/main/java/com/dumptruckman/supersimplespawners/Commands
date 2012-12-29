@@ -28,43 +28,45 @@ public final class Commands
     this.plugin = plugin;
   }
 
-  public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
-  {
-    if (args != null) {
-      if ((sender instanceof Player)) {
-          usePermissionsStructure((Player)sender, cmd, commandLabel, args);
-      }
-        else
-          useNormalStructure((Player)sender, cmd, commandLabel, args);
-      }
-      else {
-        sender.sendMessage(ChatColor.RED + "Sorry, you are not a player!");
-      }
-    return true;
-  }
+  @Override
+	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
+		if (args != null) {
+			if (sender instanceof Player) 
+			{
+					usePermissionsStructure((Player) sender, cmd, commandLabel, args);
+			}
+			 else {
+				sender.sendMessage(ChatColor.RED + "Sorry, you are not a player!");
+			}
+		}
+
+		return true;
+	}
+
 
   private void usePermissionsStructure(Player sender, Command cmd, String commandLabel, String[] args) {
 
-    if (args.length == 0)
-    {
-      if (sender.hasPermission(HELP))
-        showHelp(sender);
-      else
-        sender.sendMessage(ChatColor.RED + "You are not authorized to use this command.");
-    }
-    else if (args.length == 1)
-    {
-      String command = args[0];
+		if (args.length == 0) {
+			// show help
+			if (sender.hasPermission(HELP)) {
+				showHelp(sender);
+			} else {
+				sender.sendMessage(ChatColor.RED + "You are not authorized to use this command.");
+			}
+		} else if (args.length == 1) {
+			// commands with 0 arguments
+			String command = args[0];
 
-      if (command.equalsIgnoreCase("reload"))
-      {
-        if (sender.hasPermission(RELOAD))
-          reloadPlugin(sender);
-        else
-          sender.sendMessage(ChatColor.RED + "You are not authorized to use this command.");
-      }
-    }
-  }
+			if (command.equalsIgnoreCase("reload")) {
+				// reload
+				if (sender.hasPermission(RELOAD)) {
+					reloadPlugin(sender);
+				} else {
+					sender.sendMessage(ChatColor.RED + "You are not authorized to use this command.");
+				}
+			}
+		}
+	}
 
   private void useNormalStructure(Player sender, Command cmd, String commandLabel, String[] args)
   {
@@ -91,7 +93,7 @@ public final class Commands
 
   private void showHelp(Player sender)
   {
-	sender.sendMessage(ChatColor.GREEN + "Version: 1.4.2");
+    sender.sendMessage(ChatColor.GREEN + "Version: 1.4.2");
     sender.sendMessage(ChatColor.YELLOW + "Available commands:");
     if (sender.hasPermission(RELOAD)) {
     sender.sendMessage(ChatColor.GOLD + "/sss reload - reloads the plugin's config file");
