@@ -2,3 +2,8 @@ name: SuperSimpleSpawners
 main: com.dumptruckman.supersimplespawners.SuperSimpleSpawners
 version: maven-version-number
 author: dumptruckman
+
+permissions:
+  SSS.*:
+    default: op
+    description: Give players with op everything by default
