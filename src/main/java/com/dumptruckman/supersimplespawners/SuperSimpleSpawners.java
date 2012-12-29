@@ -103,7 +103,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     private static final Permission ALL_PERMS = new Permission(
             "sss.*",
             "Gives all permissions for this plugin.",
-            PermissionDefault.FALSE);
+            PermissionDefault.OP);
 
     /**
      * Permission to be able to place spawn eggs as spawners.
