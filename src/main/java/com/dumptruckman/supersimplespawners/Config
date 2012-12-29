@@ -1,0 +1,111 @@
+package com.dumptruckman.supersimplespawners;
+
+import java.io.File;
+import java.io.IOException;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
+
+public final class Config
+{
+  private SuperSimpleSpawners plugin;
+  private static String pluginName;
+  private static String pluginVersion;
+  private static String directory = "plugins" + File.separator + "SuperSimpleSpawners" + File.separator;
+  private File configFile = new File(directory + "config.yml");
+  private YamlConfiguration bukkitConfig = new YamlConfiguration();
+
+  private boolean explosionDrops = false;
+
+  public Config(SuperSimpleSpawners plugin)
+  {
+    this.plugin = plugin;
+    pluginName = "SuperSimpleSpawners";
+  }
+
+  @SuppressWarnings("unused")
+public boolean loadConfig()
+  {
+    boolean isErrorFree = true;
+    pluginVersion = "1.4.2";
+
+    new File(directory).mkdir();
+
+    if (this.configFile.exists())
+      try {
+        this.bukkitConfig.load(this.configFile);
+
+        if (this.bukkitConfig.getString("Version", "").equals(pluginVersion))
+        {
+          Log.info(pluginName + " config file found, loading config...");
+          loadData();
+        }
+        loadData();
+        writeDefault();
+      }
+      catch (Exception e)
+      {
+        e.printStackTrace();
+      }
+    else {
+      try
+      {
+        Log.info(pluginName + " config file not found, creating new config file...");
+        this.configFile.createNewFile();
+        writeDefault();
+      } catch (IOException ioe) {
+        Log.severe("Could not create the config file for " + pluginName + "!");
+        ioe.printStackTrace();
+        isErrorFree = false;
+      }
+    }
+
+    label214: return isErrorFree;
+  }
+
+  private void loadData() {
+    try {
+      this.bukkitConfig.load(this.configFile);
+
+      this.explosionDrops = this.bukkitConfig.getBoolean("ExplosionDrops", false);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void writeDefault() {
+    write("Version", "1.4.2");
+    write("ExplosionDrops", Boolean.valueOf(this.explosionDrops));
+    loadData();
+  }
+
+  private void write(String key, Object o) {
+    try {
+      this.bukkitConfig.load(this.configFile);
+      this.bukkitConfig.set(key, o);
+      this.bukkitConfig.save(this.configFile);
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public boolean getExplosionDrops()
+  {
+    return this.explosionDrops;
+  }
+
+  public String[] printLoadedConfig()
+  {
+    return new String[] { "this doesn't work right now." };
+  }
+
+  public File getConfigFile()
+  {
+    return this.configFile;
+  }
+
+  public Plugin getPlugin()
+  {
+    return this.plugin;
+  }
+}
