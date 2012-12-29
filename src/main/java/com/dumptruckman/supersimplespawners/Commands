@@ -1,0 +1,108 @@
+package com.dumptruckman.supersimplespawners;
+
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+
+public final class Commands
+  implements CommandExecutor
+{
+  private SuperSimpleSpawners plugin;
+  
+  private static final Permission RELOAD = new Permission(
+          "sss.reload",
+          "Reloads server config.",
+          PermissionDefault.OP);
+  
+  private static final Permission HELP = new Permission(
+          "sss.help",
+          "Displays information about SuperSimpleSpawners",
+          PermissionDefault.TRUE);
+
+  public Commands(SuperSimpleSpawners plugin)
+  {
+    this.plugin = plugin;
+  }
+
+  public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
+  {
+    if (args != null) {
+      if ((sender instanceof Player)) {
+          usePermissionsStructure((Player)sender, cmd, commandLabel, args);
+      }
+        else
+          useNormalStructure((Player)sender, cmd, commandLabel, args);
+      }
+      else {
+        sender.sendMessage(ChatColor.RED + "Sorry, you are not a player!");
+      }
+    return true;
+  }
+
+  private void usePermissionsStructure(Player sender, Command cmd, String commandLabel, String[] args) {
+
+    if (args.length == 0)
+    {
+      if (sender.hasPermission(HELP))
+        showHelp(sender);
+      else
+        sender.sendMessage(ChatColor.RED + "You are not authorized to use this command.");
+    }
+    else if (args.length == 1)
+    {
+      String command = args[0];
+
+      if (command.equalsIgnoreCase("reload"))
+      {
+        if (sender.hasPermission(RELOAD))
+          reloadPlugin(sender);
+        else
+          sender.sendMessage(ChatColor.RED + "You are not authorized to use this command.");
+      }
+    }
+  }
+
+  private void useNormalStructure(Player sender, Command cmd, String commandLabel, String[] args)
+  {
+    if (sender.isOp()) {
+      if (args.length == 0)
+      {
+        showHelp(sender);
+      } else if (args.length == 1)
+      {
+        String command = args[0];
+
+        if (command.equalsIgnoreCase("reload"))
+        {
+          reloadPlugin(sender);
+        }
+        else
+        {
+          sender.sendMessage(ChatColor.RED + "Unkown command for SuperSimpleSpawners");
+        }
+      }
+    }
+    else sender.sendMessage(ChatColor.RED + "You are not authorized to use this command.");
+  }
+
+  private void showHelp(Player sender)
+  {
+	sender.sendMessage(ChatColor.GREEN + "Version: 1.4.2");
+    sender.sendMessage(ChatColor.YELLOW + "Available commands:");
+    if (sender.hasPermission(RELOAD)) {
+    sender.sendMessage(ChatColor.GOLD + "/sss reload - reloads the plugin's config file");
+	}
+  }
+
+  private void reloadPlugin(Player sender) {
+    Log.info("'" + sender.getName() + "' requested reload of SuperSimpleSpawners");
+    sender.sendMessage(ChatColor.GREEN + "Reloading SuperSimpleSpawners");
+
+    if (this.plugin.reload())
+      sender.sendMessage(ChatColor.GREEN + "Success!");
+  }
+}
