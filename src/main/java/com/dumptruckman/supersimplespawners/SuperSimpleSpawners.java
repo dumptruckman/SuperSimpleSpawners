@@ -27,6 +27,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
@@ -337,7 +338,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         if (player.getGameMode() == GameMode.SURVIVAL) {
-            ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityType.getTypeId());
+            ItemStack spawnEgg = (new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1));
             block.getWorld().dropItemNaturally(block.getLocation(),
                     spawnEgg);
         }
@@ -391,7 +392,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             	  CreatureSpawner spawner = (CreatureSpawner) block.get(i).getState();
             	  
                   EntityType entityType = spawner.getSpawnedType();
-            	  ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityType.getTypeId());
+            	  ItemStack spawnEgg = (new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1));
             	  
                   block.get(i).getWorld().dropItemNaturally(block.get(i).getLocation(), spawnEgg);
                   block.get(i).setTypeId(0, true);
