@@ -1,10 +1,5 @@
 package com.dumptruckman.supersimplespawners;
 
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
@@ -30,6 +25,11 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * EGG PLACE SPAWNER.  SPAWNER DROP EGG.
@@ -142,7 +142,6 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     public final void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
         registerPermissions();
-        getLogger().info("enabled.");
     }
 
     private void registerPermissions() {
