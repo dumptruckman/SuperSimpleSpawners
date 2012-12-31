@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 
 public final class Log
 {
-  private static String pre = "[SuperSimpleSpawners] ";
+  private static String pre = "[" + SuperSimpleSpawners.getPluginName() +"] ";
   private static final Logger LOG = Logger.getLogger("Minecraft");
 
   public static void info(String message)
