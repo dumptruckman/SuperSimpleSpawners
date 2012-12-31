@@ -389,19 +389,16 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         
         for (int i = 0; i < s; i++)
         {
-              if (block.get(i).getType().equals(Material.MOB_SPAWNER)) {
-            	  CreatureSpawner spawner = (CreatureSpawner) block.get(i).getState();
-            	  
-                  EntityType entityType = spawner.getSpawnedType();
-            	  ItemStack spawnEgg = (new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1));
-            	  
-                  block.get(i).getWorld().dropItemNaturally(block.get(i).getLocation(), spawnEgg);
-                  block.get(i).setTypeId(0, true);
+              if (!block.get(i).getType().equals(Material.MOB_SPAWNER)) {
+                  return;
               }
-              else
-              {
-                 continue;
-              }
+           CreatureSpawner spawner = (CreatureSpawner) block.get(i).getState();
+            	  
+           EntityType entityType = spawner.getSpawnedType();
+           ItemStack spawnEgg = (new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1));
+            	  
+           block.get(i).getWorld().dropItemNaturally(block.get(i).getLocation(), spawnEgg);
+           block.get(i).setTypeId(0, true);
            
            block.remove(block.get(i));
            i--;
