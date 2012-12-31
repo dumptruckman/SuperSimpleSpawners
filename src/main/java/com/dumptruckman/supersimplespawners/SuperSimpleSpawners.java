@@ -52,6 +52,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      * Config
      */
     private Config config = new Config(this);
+    
+    /**
+     * Plugin Info
+     */
+    public static SuperSimpleSpawners plugin;
+    public static final Logger log = Logger.getLogger("Minecraft");
+	private static String version;
+	private static final String PLUGIN_NAME = "SuperSimpleSpawners";
 
     /**
      * Contains a set of non-solid blocks, which you cannot
@@ -152,6 +160,8 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
     @Override
     public final void onEnable() {
+        PluginDescriptionFile pdfFile = getDescription();
+        version = pdfFile.getVersion();
         getCommand("supersimplespawners").setExecutor(this.cmdExecutor);
         getCommand("sss").setExecutor(this.cmdExecutor);
         this.config.loadConfig();
@@ -423,6 +433,28 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     	}
     }
     
+    /**
+     * Returns the version of the plugin.
+	 */
+	public static String getVersion() {
+		return version;
+	}
+
+	/**
+	 * Returns the name of the plugin.
+	 */
+	public static String getPluginName() {
+		return PLUGIN_NAME;
+	}
+
+	@Override
+	public String toString() {
+		return getPluginName();
+	}
+    
+	/**
+	 * Reloads the plugin config
+	 */
     public boolean reload()
     {
       return this.config.loadConfig();
