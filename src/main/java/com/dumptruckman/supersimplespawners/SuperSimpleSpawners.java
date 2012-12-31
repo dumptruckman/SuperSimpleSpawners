@@ -165,8 +165,9 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     }
 
     private void registerPermissions() {
-        PluginManager pm = this.getServer().getPluginManager();
+        final PluginManager pm = this.getServer().getPluginManager();
 
+        // Let's add child permissions to our drop/place permissions for each entity type.
         for (EntityType entityType : EntityType.values()) {
             if (entityType.isAlive() && entityType.isSpawnable()) {
                 String name = entityType.getName().toLowerCase();
@@ -184,14 +185,22 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 PLACE_SPECIFIC.put(entityType, place);
             }
         }
+        // Add the drop/place permission to the global parent permission. (sss.*)
         CAN_DROP.addParent(ALL_PERMS, true);
         CAN_PLACE.addParent(ALL_PERMS, true);
+        // Register all of our permissions.
         pm.addPermission(CAN_PLACE);
         pm.addPermission(CAN_DROP);
         pm.addPermission(ALL_PERMS);
         pm.addPermission(SILK_TOUCH);
     }
 
+    /**
+     * Retrieves a new {@link #SPAWN_EGG} type ItemStack based on the given entity type.
+     *
+     * @param entityType The entity type a spawn egg is needed for.
+     * @return A new spawn egg item.
+     */
     private static ItemStack getSpawnEgg(final EntityType entityType) {
         return new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1);
     }
@@ -203,7 +212,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      */
     @EventHandler(priority = EventPriority.LOWEST)
     public final void playerInteract(final PlayerInteractEvent event) {
-        Player player = event.getPlayer();
+        final Player player = event.getPlayer();
         // Check if this is an event the plugin should be interested in, a right click with a
         // spawn egg, if it isn't stop here.
         if (!event.hasItem()
@@ -212,7 +221,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 || !event.hasBlock()) {
             return;
         }
-        ItemStack itemInHand = player.getItemInHand();
+        final ItemStack itemInHand = player.getItemInHand();
         EntityType entityType = EntityType.fromId(itemInHand.getDurability());
 
         // Check if the Metadata on the egg being placed is valid for a spawner, if it
@@ -230,7 +239,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
         // Get the block that the player is attempting to place on and ensure
         // that the block is valid
-        Block targetBlock = event.getClickedBlock();
+        final Block targetBlock = event.getClickedBlock();
         if (NON_SOLID_BLOCKS.contains(targetBlock.getType())
                 || targetBlock.getState() instanceof InventoryHolder) {
             return;
@@ -251,7 +260,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // Figure out which side of the block was clicked on and use that to determine
         // where to place the spawner.  However, if the block is a type that normally gets
         // replaced when you place on it, we'll use that position.
-        Block placedBlock;
+        final Block placedBlock;
         if (REPLACEABLE_BLOCKS.contains(targetBlock.getType())) {
             placedBlock = targetBlock;
         } else {
@@ -259,7 +268,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         }
 
         // Ensure that the player is not placing the block in themselves.
-        Block playerLocation = player.getLocation().getBlock();
+        final Block playerLocation = player.getLocation().getBlock();
         if (playerLocation.getRelative(0, -1, 0).equals(placedBlock)
                 || playerLocation.equals(placedBlock)) {
             return;
@@ -273,15 +282,15 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         }
         // Save the previous state of the block being manipulated, in case the fake block place
         // event we throw is canceled.
-        BlockState previousState = placedBlock.getState();
+        final BlockState previousState = placedBlock.getState();
         // Replace the placed block with a spawner cage.
         placedBlock.setType(Material.MOB_SPAWNER);
-        CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
+        final CreatureSpawner spawner = (CreatureSpawner) placedBlock.getState();
         // We're going to change the item type to a monster spawner so it looks like that's what the
         // player is placing for the fake block place event.
         itemInHand.setType(Material.MOB_SPAWNER);
         // Create a block place event for compatibility, then call it.
-        BlockPlaceEvent bpEvent = new BlockPlaceEvent(placedBlock, previousState, targetBlock,
+        final BlockPlaceEvent bpEvent = new BlockPlaceEvent(placedBlock, previousState, targetBlock,
                 itemInHand, player, canBuild(player, placedBlock.getX(), placedBlock.getZ()));
         Bukkit.getPluginManager().callEvent(bpEvent);
         // Now we'll switch that monster spawner back to spawn eggs so the player sees no change
@@ -328,20 +337,20 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public final void blockBreak(final BlockBreakEvent event) {
-        Block block = event.getBlock();
+        final Block block = event.getBlock();
         if (event.isCancelled()
                 || !block.getType().equals(Material.MOB_SPAWNER)) {
             return;
         }
-        Player player = event.getPlayer();
+        final Player player = event.getPlayer();
         if (player.hasPermission(SILK_TOUCH)) {
-            ItemStack itemHeld = player.getItemInHand();
+            final ItemStack itemHeld = player.getItemInHand();
             if (itemHeld == null || !itemHeld.containsEnchantment(Enchantment.SILK_TOUCH)) {
                 return;
             }
         }
-        CreatureSpawner spawner = (CreatureSpawner) block.getState();
-        EntityType entityType = spawner.getSpawnedType();
+        final CreatureSpawner spawner = (CreatureSpawner) block.getState();
+        final EntityType entityType = spawner.getSpawnedType();
         if (!player.hasPermission(DROP_SPECIFIC.get(entityType))) {
             return;
         }
@@ -380,17 +389,25 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      */
     private static boolean canBuild(Player player, int x, int z) {
         int spawnSize = Bukkit.getServer().getSpawnRadius();
-        World world = player.getWorld();
+        final World world = player.getWorld();
 
-        if (!world.equals(Bukkit.getWorlds().get(0))) return true;
-        if (spawnSize <= 0) return true;
-        if (Bukkit.getServer().getOperators().isEmpty()) return true;
-        if (player.isOp()) return true;
+        if (!world.equals(Bukkit.getWorlds().get(0))) {
+            return true;
+        }
+        if (spawnSize <= 0) {
+            return true;
+        }
+        if (Bukkit.getServer().getOperators().isEmpty()) {
+            return true;
+        }
+        if (player.isOp()) {
+            return true;
+        }
 
-        Chunk chunkcoordinates = player.getLocation().getChunk();
+        final Chunk chunkCoordinates = player.getLocation().getChunk();
 
-        int distanceFromSpawn = (int) Math.max(Math.abs(x - chunkcoordinates.getX()),
-                Math.abs(z - chunkcoordinates.getZ()));
+        final int distanceFromSpawn = (int) Math.max(Math.abs(x - chunkCoordinates.getX()),
+                Math.abs(z - chunkCoordinates.getZ()));
         return distanceFromSpawn > spawnSize;
     }
 }
