@@ -14,7 +14,7 @@ public final class Config
  /**
   * File handling
   */
-  private static String directory = "plugins" + File.separator + "SuperSimpleSpawners" + File.separator;
+  private static String directory = "plugins" + File.separator + SuperSimpleSpawners.getPluginName() + File.separator;
   private File configFile = new File(directory + "config.yml");
   private YamlConfiguration bukkitConfig = new YamlConfiguration();
 
@@ -26,14 +26,14 @@ public final class Config
   public Config(SuperSimpleSpawners plugin)
   {
     this.plugin = plugin;
-    pluginName = "SuperSimpleSpawners";
+    pluginName = SuperSimpleSpawners.getPluginName();
   }
 
   @SuppressWarnings("unused")
 public boolean loadConfig()
   {
     boolean isErrorFree = true;
-    pluginVersion = "1.4.2";
+    pluginVersion = SuperSimpleSpawners.getVersion();
 
     new File(directory).mkdir();
 
@@ -80,7 +80,7 @@ public boolean loadConfig()
   }
 
   private void writeDefault() {
-    write("Version", "1.4.2");
+    write("Version", SuperSimpleSpawners.getVersion());
     write("ExplosionDrops", Boolean.valueOf(this.explosionDrops));
     loadData();
   }
