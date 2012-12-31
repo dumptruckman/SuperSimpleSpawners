@@ -174,6 +174,9 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         getConfig().addDefaults(YamlConfiguration.loadConfiguration(getResource("config.yml")));
         // And then copy the key-value pairs that may not exist.
         getConfig().options().copyDefaults(true);
+        getConfig().options().header("The " + EXPLOSION_DROP_KEY + " setting tells the plugin whether or not to drop spawn eggs when a spawner is blown up by an explosion.");
+        // We need to save the config file in order to apply the previous to changes.
+        saveConfig();
     }
 
     private void registerPermissions() {
