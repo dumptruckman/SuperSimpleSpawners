@@ -346,9 +346,9 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         if (player.getGameMode() == GameMode.SURVIVAL) {
-            ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityType.getTypeId());
-            block.getWorld().dropItemNaturally(block.getLocation(),
-                    spawnEgg);
+            final ItemStack spawnEgg = getSpawnEgg(entityType);
+            final Location blockLocation = block.getLocation();
+            blockLocation.getWorld().dropItemNaturally(blockLocation, spawnEgg);
         }
         block.setTypeId(0, true);
     }
