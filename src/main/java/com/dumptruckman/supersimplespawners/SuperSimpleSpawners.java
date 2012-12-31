@@ -3,11 +3,13 @@ package com.dumptruckman.supersimplespawners;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -18,9 +20,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
@@ -138,10 +142,26 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      */
     private static final Map<EntityType, Permission> DROP_SPECIFIC = new HashMap<EntityType, Permission>();
 
+    /**
+     * Config key for explosion drops.
+     */
+    private static final String EXPLOSION_DROP_KEY = "drop_egg_on_spawner_explosion";
+
     @Override
     public final void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
+        ensureConfigPrepared();
         registerPermissions();
+    }
+
+    private void ensureConfigPrepared() {
+        // Check if a config file exists, if not, copy the default from the jar.
+        // This will not overwrite it if it already exists.
+        saveDefaultConfig();
+        // Lets set defaults for all the config values in case the config file exists but the user erased the contents.
+        getConfig().addDefaults(YamlConfiguration.loadConfiguration(getResource("config.yml")));
+        // And then copy the key-value pairs that may not exist.
+        getConfig().options().copyDefaults(true);
     }
 
     private void registerPermissions() {
@@ -170,6 +190,10 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         pm.addPermission(CAN_DROP);
         pm.addPermission(ALL_PERMS);
         pm.addPermission(SILK_TOUCH);
+    }
+
+    private static ItemStack getSpawnEgg(final EntityType entityType) {
+        return new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1);
     }
 
     /**
@@ -327,6 +351,23 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                     spawnEgg);
         }
         block.setTypeId(0, true);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public final void onEntityExplode(final EntityExplodeEvent event) {
+        // If explosion drops is enabled in the config when spawners are destroyed by explosions
+        // the correct egg for that spawner will drop.
+        if (getConfig().getBoolean(EXPLOSION_DROP_KEY)) {
+            for (final Block block : event.blockList()) {
+                if (block.getState() instanceof CreatureSpawner) {
+                    final CreatureSpawner spawner = (CreatureSpawner) block.getState();
+                    ItemStack spawnEgg = getSpawnEgg(spawner.getSpawnedType());
+
+                    final Location blockLocation = block.getLocation();
+                    blockLocation.getWorld().dropItemNaturally(blockLocation, spawnEgg);
+                }
+            }
+        }
     }
 
     /**
