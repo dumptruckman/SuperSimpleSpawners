@@ -2,6 +2,7 @@ package com.dumptruckman.supersimplespawners;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,6 +27,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
@@ -40,6 +42,24 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      * Spawn Egg item id.
      */
     private static final int SPAWN_EGG = 383;
+    
+    /**
+     * Commands
+     */
+    private final Commands cmdExecutor = new Commands(this);
+    
+    /**
+     * Config
+     */
+    private Config config = new Config(this);
+    
+    /**
+     * Plugin Info
+     */
+    public static SuperSimpleSpawners plugin;
+    public static final Logger log = Logger.getLogger("Minecraft");
+	private static String version;
+	private static final String PLUGIN_NAME = "SuperSimpleSpawners";
 
     /**
      * Contains a set of non-solid blocks, which you cannot
@@ -103,7 +123,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     private static final Permission ALL_PERMS = new Permission(
             "sss.*",
             "Gives all permissions for this plugin.",
-            PermissionDefault.FALSE);
+            PermissionDefault.OP);
 
     /**
      * Permission to be able to place spawn eggs as spawners.
@@ -140,6 +160,11 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
     @Override
     public final void onEnable() {
+        PluginDescriptionFile pdfFile = getDescription();
+        version = pdfFile.getVersion();
+        getCommand("supersimplespawners").setExecutor(this.cmdExecutor);
+        getCommand("sss").setExecutor(this.cmdExecutor);
+        this.config.loadConfig();
         getServer().getPluginManager().registerEvents(this, this);
         registerPermissions();
         getLogger().info("enabled.");
@@ -181,6 +206,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public final void playerInteract(final PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        
+        // Ensure the player is valid
+        if(player == null)
+        	return;
+        
+        // Check if this player is a Citizens NPC
+        if(player.hasMetadata("NPC")) return;
+        
         // Check if this is an event the plugin should be interested in, a right click with a
         // spawn egg, if it isn't stop here.
         if (!event.hasItem()
@@ -311,6 +344,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         Player player = event.getPlayer();
+        
+        // Ensure the player is valid
+        if(player == null)
+        	return;
+        
+        // Check if this player is a Citizens NPC
+        if(player.hasMetadata("NPC")) return;
+        
         if (player.hasPermission(SILK_TOUCH)) {
             ItemStack itemHeld = player.getItemInHand();
             if (itemHeld == null || !itemHeld.containsEnchantment(Enchantment.SILK_TOUCH)) {
@@ -323,7 +364,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         if (player.getGameMode() == GameMode.SURVIVAL) {
-            ItemStack spawnEgg = new ItemStack(SPAWN_EGG, 1, entityType.getTypeId());
+            ItemStack spawnEgg = (new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1));
             block.getWorld().dropItemNaturally(block.getLocation(),
                     spawnEgg);
         }
@@ -344,6 +385,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
         if (!world.equals(Bukkit.getWorlds().get(0))) return true;
         if (spawnSize <= 0) return true;
+        if (Bukkit.getServer().getOperators().isEmpty()) return true;
         if (player.isOp()) return true;
 
         Chunk chunkcoordinates = player.getLocation().getChunk();
@@ -351,5 +393,70 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         int distanceFromSpawn = (int) Math.max(Math.abs(x - chunkcoordinates.getX()),
                 Math.abs(z - chunkcoordinates.getZ()));
         return distanceFromSpawn > spawnSize;
+    }
+    
+    @EventHandler(priority=EventPriority.MONITOR)
+    public final void onEntityExplode(final EntityExplodeEvent event) {
+        
+    	// If the explosion is null or is cancelled then it
+    	// will not effect the spawner
+    	if ((event == null) || (event.isCancelled())) {
+            return;
+         }
+    	
+    	// If explosion drops is enabled in the config
+    	// when spawners are destroyed by explosions
+    	// the correct egg for that spawner will drop
+    	// and the spawner will be replaced with air.
+    	if (this.config.getExplosionDrops()) {
+    		
+    	List<Block> block = event.blockList();
+        int s = block.size();
+        
+        for (int i = 0; i < s; i++)
+        {
+              if (!block.get(i).getType().equals(Material.MOB_SPAWNER)) {
+                  return;
+              }
+           CreatureSpawner spawner = (CreatureSpawner) block.get(i).getState();
+            	  
+           EntityType entityType = spawner.getSpawnedType();
+           ItemStack spawnEgg = (new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1));
+            	  
+           block.get(i).getWorld().dropItemNaturally(block.get(i).getLocation(), spawnEgg);
+           block.get(i).setTypeId(0, true);
+           
+           block.remove(block.get(i));
+           i--;
+           s--;
+        }
+    	}
+    }
+    
+    /**
+     * Returns the version of the plugin.
+	 */
+	public static String getVersion() {
+		return version;
+	}
+
+	/**
+	 * Returns the name of the plugin.
+	 */
+	public static String getPluginName() {
+		return PLUGIN_NAME;
+	}
+
+	@Override
+	public String toString() {
+		return getPluginName();
+	}
+    
+	/**
+	 * Reloads the plugin config
+	 */
+    public boolean reload()
+    {
+      return this.config.loadConfig();
     }
 }

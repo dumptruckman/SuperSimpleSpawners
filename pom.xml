@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dumptruckman</groupId>
     <artifactId>SuperSimpleSpawners</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
     <name>SuperSimpleSpawners</name>
     <description>Spawners from eggs.  Eggs from spawners.</description>
     <properties>
@@ -115,7 +115,7 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.2.5-R1.0</version>
+            <version>1.4.6-R0.3</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
