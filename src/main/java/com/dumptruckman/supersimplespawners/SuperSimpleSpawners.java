@@ -1,6 +1,7 @@
 package com.dumptruckman.supersimplespawners;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -9,6 +10,8 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
@@ -133,6 +136,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             PermissionDefault.FALSE);
 
     /**
+     * Permission to use the reload command.
+     */
+    private static final Permission RELOAD_COMMAND = new Permission(
+            "sss.reload",
+            "Allows the use of the supersimplespawnersreload command.",
+            PermissionDefault.OP);
+
+    /**
      * Permission map for placing specific spawners.
      */
     private static final Map<EntityType, Permission> PLACE_SPECIFIC = new HashMap<EntityType, Permission>();
@@ -152,6 +163,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         ensureConfigPrepared();
         registerPermissions();
+        // No log message is needed here, Bukkit already tells the server that it is enabling.
     }
 
     private void ensureConfigPrepared() {
@@ -188,11 +200,13 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // Add the drop/place permission to the global parent permission. (sss.*)
         CAN_DROP.addParent(ALL_PERMS, true);
         CAN_PLACE.addParent(ALL_PERMS, true);
+        RELOAD_COMMAND.addParent(ALL_PERMS, true);
         // Register all of our permissions.
         pm.addPermission(CAN_PLACE);
         pm.addPermission(CAN_DROP);
-        pm.addPermission(ALL_PERMS);
         pm.addPermission(SILK_TOUCH);
+        pm.addPermission(RELOAD_COMMAND);
+        pm.addPermission(ALL_PERMS);
     }
 
     /**
@@ -203,6 +217,16 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      */
     private static ItemStack getSpawnEgg(final EntityType entityType) {
         return new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1);
+    }
+
+    @Override
+    public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+        // We only have one command and it does one simple thing.
+        // As such we don't need to do any argument checking or anything else.
+        // This method is only going to be called for our single command and that's it!
+        reloadConfig();
+        sender.sendMessage(ChatColor.AQUA + "=== SuperSimpleSpawners config reloaded ===");
+        return true;
     }
 
     /**
