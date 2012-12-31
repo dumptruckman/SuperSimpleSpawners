@@ -359,6 +359,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
         if (!world.equals(Bukkit.getWorlds().get(0))) return true;
         if (spawnSize <= 0) return true;
+        if (Bukkit.getServer().getOperators().isEmpty()) return true;
         if (player.isOp()) return true;
 
         Chunk chunkcoordinates = player.getLocation().getChunk();
@@ -369,7 +370,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     }
     
     @EventHandler(priority=EventPriority.MONITOR)
-    public void onEntityExplode(EntityExplodeEvent event) {
+    public final void onEntityExplode(final EntityExplodeEvent event) {
         
     	// If the explosion is null or is cancelled then it
     	// will not effect the spawner
