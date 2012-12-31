@@ -384,6 +384,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
 
         if (!world.equals(Bukkit.getWorlds().get(0))) return true;
         if (spawnSize <= 0) return true;
+        if (Bukkit.getServer().getOperators().isEmpty()) return true;
         if (player.isOp()) return true;
 
         Chunk chunkcoordinates = player.getLocation().getChunk();
