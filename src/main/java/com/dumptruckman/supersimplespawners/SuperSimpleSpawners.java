@@ -196,6 +196,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public final void playerInteract(final PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        
+        // Ensure the player is valid
+        if(player == null)
+        	return;
+        
+        // Check if this player is a Citizens NPC
+        if(player.hasMetadata("NPC")) return;
+        
         // Check if this is an event the plugin should be interested in, a right click with a
         // spawn egg, if it isn't stop here.
         if (!event.hasItem()
@@ -326,6 +334,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             return;
         }
         Player player = event.getPlayer();
+        
+        // Ensure the player is valid
+        if(player == null)
+        	return;
+        
+        // Check if this player is a Citizens NPC
+        if(player.hasMetadata("NPC")) return;
+        
         if (player.hasPermission(SILK_TOUCH)) {
             ItemStack itemHeld = player.getItemInHand();
             if (itemHeld == null || !itemHeld.containsEnchantment(Enchantment.SILK_TOUCH)) {
