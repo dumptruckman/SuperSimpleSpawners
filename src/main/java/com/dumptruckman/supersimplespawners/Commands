@@ -20,7 +20,7 @@ public final class Commands
   
   private static final Permission HELP = new Permission(
           "sss.help",
-          "Displays information about SuperSimpleSpawners",
+          "Displays information about " + SuperSimpleSpawners.getPluginName(),
           PermissionDefault.TRUE);
 
   public Commands(SuperSimpleSpawners plugin)
@@ -93,7 +93,7 @@ public final class Commands
 
   private void showHelp(Player sender)
   {
-    sender.sendMessage(ChatColor.GREEN + "Version: 1.4.2");
+    sender.sendMessage(ChatColor.GREEN + "Version: " + SuperSimpleSpawners.getVersion());
     sender.sendMessage(ChatColor.YELLOW + "Available commands:");
     if (sender.hasPermission(RELOAD)) {
     sender.sendMessage(ChatColor.GOLD + "/sss reload - reloads the plugin's config file");
@@ -101,8 +101,8 @@ public final class Commands
   }
 
   private void reloadPlugin(Player sender) {
-    Log.info("'" + sender.getName() + "' requested reload of SuperSimpleSpawners");
-    sender.sendMessage(ChatColor.GREEN + "Reloading SuperSimpleSpawners");
+    Log.info("'" + sender.getName() + "' requested reload of " + SuperSimpleSpawners.getPluginName());
+    sender.sendMessage(ChatColor.GREEN + "Reloading " + SuperSimpleSpawners.getPluginName());
 
     if (this.plugin.reload())
       sender.sendMessage(ChatColor.GREEN + "Success!");
