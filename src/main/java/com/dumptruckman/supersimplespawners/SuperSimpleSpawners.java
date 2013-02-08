@@ -237,7 +237,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      *
      * @param event The event for said left or right clicks.
      */
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public final void playerInteract(final PlayerInteractEvent event) {
         final Player player = event.getPlayer();
         // Check if this is an event the plugin should be interested in, a right click with a
@@ -245,9 +245,11 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         if (!event.hasItem()
                 || event.getItem().getTypeId() != SPAWN_EGG
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)
-                || !event.hasBlock()) {
+                || !event.hasBlock() 
+                || event.isCancelled()) {
             return;
         }
+        
         final ItemStack itemInHand = player.getItemInHand();
         EntityType entityType = EntityType.fromId(itemInHand.getDurability());
 
@@ -267,6 +269,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // Get the block that the player is attempting to place on and ensure
         // that the block is valid
         final Block targetBlock = event.getClickedBlock();
+        
+        // If player is sneaking and trys to place a spawner on an interactive block
+        // it will ensure that the normal spawn egg behavior is prevented
+        if (INTERACTIVE_MATERIALS.contains(targetBlock.getType()) && player.isSneaking()) {
+        	event.setCancelled(true);
+            event.setUseItemInHand(Event.Result.DENY);
+        }
+        
         if (NON_SOLID_BLOCKS.contains(targetBlock.getType())
                 || targetBlock.getState() instanceof InventoryHolder) {
             return;
@@ -279,7 +289,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         if (INTERACTIVE_MATERIALS.contains(targetBlock.getType()) && !player.isSneaking()) {
             return;
         }
-
+        
         // Prevent the normal spawn egg behaviours
         event.setCancelled(true);
         event.setUseItemInHand(Event.Result.DENY);
