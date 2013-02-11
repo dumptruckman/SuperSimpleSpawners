@@ -24,6 +24,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -237,7 +238,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      *
      * @param event The event for said left or right clicks.
      */
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public final void playerInteract(final PlayerInteractEvent event) {
         final Player player = event.getPlayer();
         // Check if this is an event the plugin should be interested in, a right click with a
@@ -245,9 +246,11 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         if (!event.hasItem()
                 || event.getItem().getTypeId() != SPAWN_EGG
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)
-                || !event.hasBlock()) {
+                || !event.hasBlock() 
+                || event.isCancelled()) {
             return;
         }
+        
         final ItemStack itemInHand = player.getItemInHand();
         EntityType entityType = EntityType.fromId(itemInHand.getDurability());
 
@@ -267,6 +270,14 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // Get the block that the player is attempting to place on and ensure
         // that the block is valid
         final Block targetBlock = event.getClickedBlock();
+        
+        // If player is sneaking and trys to place a spawner on an interactive block
+        // it will ensure that the normal spawn egg behavior is prevented
+        if (INTERACTIVE_MATERIALS.contains(targetBlock.getType()) && player.isSneaking()) {
+        	event.setCancelled(true);
+            event.setUseItemInHand(Event.Result.DENY);
+        }
+        
         if (NON_SOLID_BLOCKS.contains(targetBlock.getType())
                 || targetBlock.getState() instanceof InventoryHolder) {
             return;
@@ -279,7 +290,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         if (INTERACTIVE_MATERIALS.contains(targetBlock.getType()) && !player.isSneaking()) {
             return;
         }
-
+        
         // Prevent the normal spawn egg behaviours
         event.setCancelled(true);
         event.setUseItemInHand(Event.Result.DENY);
@@ -356,7 +367,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             player.updateInventory();
         }
     }
-
+    
     /**
      * Called when a player breaks a block, successful or not.
      *
@@ -387,6 +398,25 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             blockLocation.getWorld().dropItemNaturally(blockLocation, spawnEgg);
         }
         block.setTypeId(0, true);
+    }
+    
+    /**
+     * Called when a player left or right clicks an entity.
+     *
+     * @param event The event for said left or right clicks.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public final void playerInteractEntity(final PlayerInteractEntityEvent event) {
+    	final Player player = event.getPlayer();
+    	final ItemStack itemInHand = player.getItemInHand();
+    	
+    	EntityType type = event.getRightClicked().getType();
+    	
+    	// Check if the entity being right clicked can have babies and the item is a spawn egg
+    	if((type != EntityType.VILLAGER || type != EntityType.COW  || type != EntityType.PIG || type != EntityType.SHEEP || type != EntityType.CHICKEN
+    			|| type != EntityType.WOLF || type != EntityType.OCELOT) && itemInHand.getTypeId() == SPAWN_EGG) {
+        	event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
