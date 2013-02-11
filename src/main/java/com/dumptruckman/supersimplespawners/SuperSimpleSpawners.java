@@ -24,6 +24,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -366,7 +367,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             player.updateInventory();
         }
     }
-
+    
     /**
      * Called when a player breaks a block, successful or not.
      *
@@ -397,6 +398,25 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             blockLocation.getWorld().dropItemNaturally(blockLocation, spawnEgg);
         }
         block.setTypeId(0, true);
+    }
+    
+    /**
+     * Called when a player left or right clicks an entity.
+     *
+     * @param event The event for said left or right clicks.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public final void playerInteractEntity(final PlayerInteractEntityEvent event) {
+    	final Player player = event.getPlayer();
+    	final ItemStack itemInHand = player.getItemInHand();
+    	
+    	EntityType type = event.getRightClicked().getType();
+    	
+    	// Check if the entity being right clicked can have babies and the item is a spawn egg
+    	if((type != EntityType.VILLAGER || type != EntityType.COW  || type != EntityType.PIG || type != EntityType.SHEEP || type != EntityType.CHICKEN
+    			|| type != EntityType.WOLF || type != EntityType.OCELOT) && itemInHand.getTypeId() == SPAWN_EGG) {
+        	event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
