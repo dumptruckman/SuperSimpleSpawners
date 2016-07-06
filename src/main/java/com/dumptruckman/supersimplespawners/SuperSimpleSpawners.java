@@ -67,17 +67,21 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     private static final Set<Material> INTERACTIVE_MATERIALS = EnumSet.noneOf(Material.class);
 
     static {
-        NON_SOLID_BLOCKS.add(Material.AIR);
-        NON_SOLID_BLOCKS.add(Material.WATER);
-        NON_SOLID_BLOCKS.add(Material.STATIONARY_WATER);
-        NON_SOLID_BLOCKS.add(Material.LAVA);
-        NON_SOLID_BLOCKS.add(Material.STATIONARY_LAVA);
+        // For non-solid blocks we can configure our set dynamically...
+        for (Material material : Material.values()) {
+            if (!material.isSolid()) {
+                NON_SOLID_BLOCKS.add(material);
+            }
+        }
 
+        // Replaceable blocks are a bit trickier...
         REPLACEABLE_BLOCKS.add(Material.SNOW);
         REPLACEABLE_BLOCKS.add(Material.LONG_GRASS);
         REPLACEABLE_BLOCKS.add(Material.FIRE);
         REPLACEABLE_BLOCKS.add(Material.VINE);
 
+        // And so are interactive blocks...
+        // TODO: We may be able to suss this out based on the state of the interact event...
         INTERACTIVE_MATERIALS.add(Material.ANVIL);
         INTERACTIVE_MATERIALS.add(Material.BEACON);
         INTERACTIVE_MATERIALS.add(Material.BED_BLOCK);
