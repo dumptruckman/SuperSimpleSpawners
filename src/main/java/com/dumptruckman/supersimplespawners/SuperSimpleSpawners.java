@@ -27,13 +27,13 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.MaterialData;
 import org.bukkit.material.SpawnEgg;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.InputStreamReader;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -171,7 +171,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // This will not overwrite it if it already exists.
         saveDefaultConfig();
         // Lets set defaults for all the config values in case the config file exists but the user erased the contents.
-        getConfig().addDefaults(YamlConfiguration.loadConfiguration(getResource("config.yml")));
+        getConfig().addDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(getResource("config.yml"))));
         // And then copy the key-value pairs that may not exist.
         getConfig().options().copyDefaults(true);
         getConfig().options().header("The " + EXPLOSION_DROP_KEY + " setting tells the plugin whether or not to drop spawn eggs when a spawner is blown up by an explosion.");
@@ -185,7 +185,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // Let's add child permissions to our drop/place permissions for each entity type.
         for (EntityType entityType : EntityType.values()) {
             if (entityType.isAlive() && entityType.isSpawnable()) {
-                String name = entityType.getName().toLowerCase();
+                String name = entityType.name().toLowerCase();
 
                 Permission drop = new Permission("sss.drop." + name,
                         "Spawners drop spawn eggs for " + name, PermissionDefault.FALSE);
@@ -237,19 +237,21 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      *
      * @param event The event for said left or right clicks.
      */
+    @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.LOWEST)
     public final void playerInteract(final PlayerInteractEvent event) {
         final Player player = event.getPlayer();
         // Check if this is an event the plugin should be interested in, a right click with a
         // spawn egg, if it isn't stop here.
+        final ItemStack itemInHand = event.getItem();
         if (!event.hasItem()
-                || event.getItem().getType() != Material.MONSTER_EGG
+                || itemInHand.getType() != Material.MONSTER_EGG
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)
                 || !event.hasBlock()) {
             return;
         }
-        final ItemStack itemInHand = player.getItemInHand();
-        EntityType entityType = EntityType.fromId(itemInHand.getDurability());
+        SpawnEgg spawnEggData = (SpawnEgg) itemInHand.getData();
+        EntityType entityType = spawnEggData.getSpawnedType(); // This is deprecated but there is not a replacement yet.
 
         // Check if the Metadata on the egg being placed is valid for a spawner, if it
         // isn't stop here.
@@ -318,11 +320,12 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         itemInHand.setType(Material.MOB_SPAWNER);
         // Create a block place event for compatibility, then call it.
         final BlockPlaceEvent bpEvent = new BlockPlaceEvent(placedBlock, previousState, targetBlock,
-                itemInHand, player, canBuild(player, placedBlock.getX(), placedBlock.getZ()));
+                itemInHand, player, canBuild(player, placedBlock.getX(), placedBlock.getZ()), event.getHand());
         Bukkit.getPluginManager().callEvent(bpEvent);
         // Now we'll switch that monster spawner back to spawn eggs so the player sees no change
         if (itemInHand.getType() == Material.MOB_SPAWNER) {
             itemInHand.setType(Material.MONSTER_EGG);
+            itemInHand.setData(spawnEggData);
         }
         // If the block place event was cancelled, the item was changed to something other than
         // a spawner, or the player is trying to place in spawn protection we need to stop here.
@@ -333,7 +336,8 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             previousState.update(true);
             return;
         }
-        entityType = EntityType.fromId(itemInHand.getDurability());
+        spawnEggData = (SpawnEgg) itemInHand.getData();
+        entityType = spawnEggData.getSpawnedType(); // This is deprecated but there is not a replacement yet.
         // We need to ensure that the item in their hand is still a valid monster spawner egg.
         if (entityType == null
                 || !entityType.isAlive()
@@ -351,7 +355,15 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             if (itemInHand.getAmount() > 1) {
                 itemInHand.setAmount(itemInHand.getAmount() - 1);
             } else {
-                player.getInventory().setItemInHand(null);
+                switch (event.getHand()) {
+                    case HAND:
+                        player.getInventory().setItemInMainHand(null);
+                        break;
+                    case OFF_HAND:
+                        player.getInventory().setItemInOffHand(null);
+                        break;
+                    default:
+                }
             }
             player.updateInventory();
         }
@@ -362,6 +374,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
      *
      * @param event The event for said breakage.
      */
+    @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.MONITOR)
     public final void blockBreak(final BlockBreakEvent event) {
         final Block block = event.getBlock();
@@ -371,7 +384,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         }
         final Player player = event.getPlayer();
         if (player.hasPermission(SILK_TOUCH)) {
-            final ItemStack itemHeld = player.getItemInHand();
+            final ItemStack itemHeld = player.getInventory().getItemInMainHand();
             if (itemHeld == null || !itemHeld.containsEnchantment(Enchantment.SILK_TOUCH)) {
                 return;
             }
@@ -386,9 +399,10 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
             final Location blockLocation = block.getLocation();
             blockLocation.getWorld().dropItemNaturally(blockLocation, spawnEgg);
         }
-        block.setTypeId(0, true);
+        block.setType(Material.AIR, true);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public final void onEntityExplode(final EntityExplodeEvent event) {
         // If explosion drops is enabled in the config when spawners are destroyed by explosions
