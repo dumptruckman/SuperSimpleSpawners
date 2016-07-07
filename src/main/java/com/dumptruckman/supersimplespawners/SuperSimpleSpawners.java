@@ -28,6 +28,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
+import org.bukkit.material.SpawnEgg;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
@@ -42,11 +43,6 @@ import java.util.Set;
  * EGG PLACE SPAWNER.  SPAWNER DROP EGG.
  */
 public class SuperSimpleSpawners extends JavaPlugin implements Listener {
-
-    /**
-     * Spawn Egg item id.
-     */
-    private static final int SPAWN_EGG = 383;
 
     /**
      * Contains a set of non-solid blocks, which you cannot
@@ -204,7 +200,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
                 PLACE_SPECIFIC.put(entityType, place);
             }
         }
-        // Add the drop/place permission to the global parent permission. (sss.*)
+        // Add the drop/place and reload command permission to the global parent permission. (sss.*)
         CAN_DROP.addParent(ALL_PERMS, true);
         CAN_PLACE.addParent(ALL_PERMS, true);
         RELOAD_COMMAND.addParent(ALL_PERMS, true);
@@ -217,13 +213,13 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
     }
 
     /**
-     * Retrieves a new {@link #SPAWN_EGG} type ItemStack based on the given entity type.
+     * Retrieves a new spawn egg type ItemStack based on the given entity type.
      *
      * @param entityType The entity type a spawn egg is needed for.
      * @return A new spawn egg item.
      */
     private static ItemStack getSpawnEgg(final EntityType entityType) {
-        return new MaterialData(SPAWN_EGG, (byte)entityType.getTypeId()).toItemStack(1);
+        return new SpawnEgg(entityType).toItemStack(1);
     }
 
     @Override
@@ -247,7 +243,7 @@ public class SuperSimpleSpawners extends JavaPlugin implements Listener {
         // Check if this is an event the plugin should be interested in, a right click with a
         // spawn egg, if it isn't stop here.
         if (!event.hasItem()
-                || event.getItem().getTypeId() != SPAWN_EGG
+                || event.getItem().getType() != Material.MONSTER_EGG
                 || !event.getAction().equals(Action.RIGHT_CLICK_BLOCK)
                 || !event.hasBlock()) {
             return;
